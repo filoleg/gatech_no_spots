@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  h1 Hipster shit
+  p.lead Built on top of hipster stack
+  hr
+  .row
+    .container
+      .form-horizontal#update_sections(style='padding-bottom: 15px;')
+        input#update_sections_text.input-xxlarge(type='text', placeholder='e.g. CS 2110', required='', autofocus='')
+        a.btn.btn-default#update_sections_button(href='#', role='button') Search 
+      ul#sections 
+      
+
+//-  .row
+//-    .col-sm-6
+//-    h2 Sections. yo
+//-    p 
+//-    form#update_sections(action='javascript:void(0);', novalidate='novalidate')
+//-      input#update_sections_text(type='text', required='', autofocus='', placeholder='type a class name')
+//-      a.btn.btn-default#update_sections_button(href='#', role='button') Update results
+//-    ul#sections
+//-    .col-sm-6
+//-      h2 Heading
+//-      p Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
+//-      p
+//-        a.btn.btn-default(href='#', role='button') View details »
