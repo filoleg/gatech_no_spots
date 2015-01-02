@@ -13,8 +13,8 @@ start_time = time.time()
 session = FuturesSession(max_workers=40)
 
 webapp = 'https://oscar.gatech.edu'
-sid = "*********"#GTID
-pin = "******"#PIN from OSCAR
+sid = "*******"#GTID
+pin = "***"#PIN from OSCAR
 client = MongoClient()
 db = client.no_spots_at_tech_db
 sections = db.sections

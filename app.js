@@ -269,12 +269,12 @@ io.on('connection', function(socket) {
 
 var options = {
   pythonPath: '/usr/local/Cellar/python3/3.4.2_1/Frameworks/Python.framework/Versions/3.4/Resources/Python.app/Contents/MacOS/Python',
-  scriptPath: '../myproject_cc/'
+  scriptPath: '../gatech_no_spots/'
 };
 
 var db_update_count = 0
 function db_update(){
-  PythonShell.run('retrieval_test.py', options, function (err, results) {
+  PythonShell.run('oscar_retrieval.py', options, function (err, results) {
     if (err) throw err;
     // results is an array consisting of messages collected during execution
     console.log('results: %j', db_update_count);
