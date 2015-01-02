@@ -30,7 +30,7 @@ var connectAssets = require('connect-assets');
  */
 //var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/test_db_69');
+var db = monk('localhost:27017/no_spots_at_tech_db');
 
 /**
  * Controllers (route handlers).
