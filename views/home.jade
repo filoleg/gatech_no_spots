@@ -2,7 +2,7 @@ extends layout
 
 block content
   h1 Section tracker
-  p.lead text notifications will be added asap, I just need a bit more time :P
+  p.lead Please make sure you entered correct CRN codes for phone notifications, you won't get notified about CRNs that do not exist
   hr
   .row
     .container
@@ -10,9 +10,57 @@ block content
         input#update_sections_text.input-xxlarge(type='text', placeholder='e.g. CS 2110', required='', autofocus='')
         a.btn.btn-default#update_sections_button(href='#', role='button') Search 
       ul#sections 
-      
+      a.btn.btn-default(type='button', data-toggle='modal', data-target='#phoneModal', data-whatever='eh') Get a notification about spots freeing up
 
-//-  .row
+  .row
+    
+    #phoneModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='phoneModalLabel', aria-hidden='true')
+      .modal-dialog
+          .modal-content
+            .modal-header
+              button.close(type='button', data-dismiss='modal', aria-label='Close')
+                span(aria-hidden='true') &times;
+              |         
+              h4#phoneModalLabel.modal-title Get notified
+            |       
+            .modal-body
+              form
+                .form-group
+                  label.control-label(for='recipient-name') Your phone #:
+                  |             
+                  input#phone-num.form-control(type='text', placeholder='Enter your phone number. US only, I beg you')
+                |           
+                .form-group
+                  label.control-label(for='message-text') CRNs:
+                  |             
+                  textarea#CRN-list.form-control(placeholder='Enter CRNs of all full classes you are interested in getting notified of a spot in')
+            |       
+            .modal-footer
+              button.btn.btn-default(type='button', data-dismiss='modal') Close
+              |         
+              button.btn.btn-primary#confirmPhoneModal(type='button') Confirm
+    
+
+    #wrongPhoneModal.modal.fade.bs-example-modal-sm(tabindex='-1', role='dialog', aria-labelledby='wrongPhoneModalLabel', aria-hidden='true')
+      .modal-dialog.modal-sm
+        .modal-content
+          .modal-body
+            p There is something wrong with your phone number, maybe try again?
+
+    #wrongCRNModal.modal.fade.bs-example-modal-sm(tabindex='-1', role='dialog', aria-labelledby='wrongCRNModalLabel', aria-hidden='true')
+      .modal-dialog.modal-sm
+        .modal-content
+          .modal-body
+            p There is something wrong with your CRN, maybe try again?
+    
+    #successModal.modal.fade.bs-example-modal-sm(tabindex='-1', role='dialog', aria-labelledby='successModalLabel', aria-hidden='true')
+      .modal-dialog.modal-sm
+        .modal-content
+          .modal-body
+            p Yay, you submitted your request. Once there is a free spot, you should receive a text message
+            //-Yay, seems like everything went fine. Once there is a free spot, you should receive a text message
+    
+
 //-    .col-sm-6
 //-    h2 Sections. yo
 //-    p 

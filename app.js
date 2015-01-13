@@ -1,8 +1,10 @@
 /**
  * Module dependencies.
  */
-var accountSid = 'ACbf19777effeaaa57ba2aee5ab68295fb'; 
-var authToken = '7ae0f1d678602db7cf5085e4995ee36f'; 
+var accountSid = 'placeholder'; 
+var authToken = 'placeholder';
+var twilio_number = "placeholder"
+var phone = require('phone');//used to check phone format
  
 //require the Twilio module and create a REST client 
 var client = require('twilio')(accountSid, authToken); 
@@ -75,7 +77,7 @@ var csrfExclude = ['/url1', '/url2'];
  * Express configuration.
  */
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 8080);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(compress());
@@ -218,7 +220,6 @@ server.listen(app.get('port'), function() {
   console.log('Express server listening on port %d in %s mode', app.get('port'), app.get('env'));
 });
 
-var current_course = "CS 2110"
 
 io.on('connection', function(socket) {
   
@@ -229,11 +230,11 @@ io.on('connection', function(socket) {
   }, function(err, message) { 
     console.log(message.sid); 
   });*/
-  1  
+    
 
   
   socket.emit('greet', { message: 'Connection is successful!' });
-  socket.on('respond', function(data) {
+  socket.on('respond', function(data, current_course) {
     console.log(data);
     var collection = db.get('sections');
     collection.find({course : current_course },{},function(e,data) {
@@ -259,12 +260,68 @@ io.on('connection', function(socket) {
        if (data != "") socket.emit("update_sections",data)
     }) 
   });
+  
+  socket.on('add_CRN', function(phone_num, CRN_rawlist) {
+    var crns = db.get('CRNs')
+    var CRN_list = CRN_rawlist.split(',').map(function (val) { return (+val).toString(); });
+    var collection = db.get('sections');
+    var CRN_list_clear =[]
+    //console.log(CRN_list[0]);
+    var phone_number = phone(phone_num);
+    if (phone_number[0] == null) {
+      socket.emit('wrong_phone');
+    } else if (CRN_list[0] == null) {
+      socket.emit('wrong_CRN');
+    } else {
+      CRN_list.forEach(function(item) {
+        collection.find({"CRN" : item},{}, function(e,crn_in_sections) {
+          if (crn_in_sections != ""){
+            crns.find({"CRN" : item},{}, function(e,crn) {
+              if (crn != "") {
+                var phone_num = phone_number[0];
+                //console.log(crn[0].phone_nums)
+                //console.log(CRN_list[index]);
+                crns.update( 
+                  { "CRN" : item }, 
+                  { $set: { "phone_nums" : phone_union(phone_num, crn[0].phone_nums)}});
+              } else {
+                var phone_num = phone_number[0];
+                //console.log(CRN_list[index]);
+                crns.insert({ "CRN" : item, "phone_nums" : phone_num}) ;      
+              } 
+              console.log("pushed " + item + " to the clear list, ya")
+              CRN_list_clear.push(item);
+              socket.emit('added_CRN');
+            });
+          }
+        });
+      }); 
+    }
 
-  socket.on('disconnect', function() {
-    console.log('Socket disconnected');
-  });
+      //console.log(CRN_list_clear);
+      //if(CRN_list_clear.length > 0) socket.emit('added_CRN');
+      //else socket.emit('wrong_CRN');
+  })   
 });
 
+function phone_union (new_num, old_nums) {
+  //console.log("new: " + new_num + ' old: ' + old_nums)
+  if ((typeof old_nums) == "object") {
+    
+    var isDouble = old_nums.forEach(function(elem) {
+      if (elem == new_num) return true
+    })
+    if (isDouble = true) return old_nums
+    else {
+      old_nums.push(new_num);
+      return old_nums
+    }
+  } else {
+    //console.log([new_num, old_nums]);
+    if (new_num != old_nums) return [new_num, old_nums];
+    else return old_nums
+  }
+}
 
 
 var options = {
@@ -272,16 +329,59 @@ var options = {
   scriptPath: '../gatech_no_spots/'
 };
 
-var db_update_count = 0
-function db_update(){
+
+var text_notifications_update_count = 0;
+
+function notify_user(phone_num, CRN, course) {
+  client.messages.create({
+    to: phone_num,
+    from: twilio_number,
+    body: 'Good news! ' + course + ' (CRN: ' + CRN + ") just got a free spot. Go register through buzzport or oscar before someone else claimed it!"
+  }, function(err, message) {
+    console.log(message.sid);
+  })
+    console.log("text about CRN " + CRN + " sent to " + phone_num);
+};
+
+
+setInterval(function() {
+  var crn_collection = db.get('CRNs');
+  var collection = db.get('sections');
+  crn_collection.find({},{scope:{collection:collection, crn_collection:crn_collection}},function(e,crns_to_notify) {
+    crns_to_notify.forEach(function(crn) {
+      var phones_to_notify = crn.phone_nums;
+      //console.log(crn.phone_nums);
+      collection.find({ CRN : crn.CRN },{scope:{phones_to_notify:phones_to_notify}, crn_collection:crn_collection},function(e,data) {
+        if (parseInt(stripAlphaChars(data[0].seats_left), 10) > 0) {
+          console.log("yay, free seats in " + data[0].course + " (CRN: " + data[0].CRN + ")");
+          console.log("notifying " + phones_to_notify);
+          notify_user(phones_to_notify, data[0].CRN, data[0].course);
+          var CRN_notified = data[0].CRN;
+          console.log("CRN notified " + CRN_notified)
+          crn_collection.remove({ CRN: CRN_notified})
+        }
+      });
+    });  
+  });
+}, 20*1000);
+
+function stripAlphaChars(source) { 
+  var out = source.replace(/[^0-9]/g, ''); 
+
+  return out; 
+}
+
+
+function db_update(db_update_count){
   PythonShell.run('oscar_retrieval.py', options, function (err, results) {
     if (err) throw err;
     // results is an array consisting of messages collected during execution
     console.log('results: %j', db_update_count);
-    db_update_count++;
-    db_update();//comment this line out if you want to build the db along with commenting out appropriate lines in tge .py file
-  });
+    //db_update_count++;
+    db_update(db_update_count+1);
+    //comment this line out if you want to build the db along with commenting out appropriate lines in tge .py file
+  }); 
 }
 
-db_update();
+db_update(0);
 module.exports = app;

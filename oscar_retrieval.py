@@ -13,8 +13,8 @@ start_time = time.time()
 session = FuturesSession(max_workers=40)
 
 webapp = 'https://oscar.gatech.edu'
-sid = "*******"#GTID
-pin = "***"#PIN from OSCAR
+sid = "placeholder"#GTID
+pin = "placeholder"#PIN from OSCAR
 client = MongoClient()
 db = client.no_spots_at_tech_db
 sections = db.sections
@@ -88,11 +88,13 @@ def bg_cb(sess,resp):#background callback function for asynchronous http request
           if section == u'\xa0' or raw_soup[1 + 20*(c//20)].get_text() == u'\xa0':#section or CRN
                c += 20
           else:
+               
                if changed == True:
                     aSectionObj = {}
                     aSectionObj["section"] = section
                     aSectionObj["course"] = course_name
                     changed = False
+
                if (c%20 == 0):
                     aSectionObj["status"] = raw_soup[c].get_text()
                if (c%20 == 1):
@@ -123,9 +125,11 @@ def bg_cb(sess,resp):#background callback function for asynchronous http request
                     aSectionObj["instructor"] = raw_soup[c].get_text()
                if (c%20 == 18):
                     aSectionObj["location"] = raw_soup[c].get_text()
+
                if ((c+1)//20 != section_change):#once done with a section, add to the section collection and the db_id to sections of the class dictionary
                     #sections.insert(aSectionObj)#uncomment for building the db
-                    sections.update(aSectionObj["CRN"],aSectionObj,True)#uncomment for updating the db
+                    print(aSectionObj['course'] + ' ' + aSectionObj['students_registered'] + ' ' + aSectionObj['CRN'])
+                    sections.update({'CRN' : aSectionObj["CRN"]}, {"$set": {'students_registered' : aSectionObj['students_registered'], 'seats_left' : aSectionObj['seats_left'], 'students_on_WL' : aSectionObj['students_on_WL'], 'WL_seats_left' : aSectionObj['WL_seats_left']}}, True)
 
                     changed = True     
                c+=1
