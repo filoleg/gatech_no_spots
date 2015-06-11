@@ -6,11 +6,14 @@ block content
   hr
   .row
     .container
-      .form-horizontal#update_sections(style='padding-bottom: 15px;')
+      .form-horizontal#update_sections_bar(style='padding-bottom: 15px;')
         input#update_sections_text.input-xxlarge(type='text', placeholder='e.g. CS 2110', required='', autofocus='')
-        a.btn.btn-default#update_sections_button(href='#', role='button') Search 
+      .form-horizontal#update_sections_buttons(style='padding-bottom: 15px;')
+        a.btn.btn-default#update_sections_button1(href='#', role='button') Show Summer 2015 Sections
+        a.btn.btn-default#update_sections_button2(href='#', role='button') Show Fall 2015 Sections
       ul#sections 
-      a.btn.btn-default(type='button', data-toggle='modal', data-target='#phoneModal', data-whatever='eh') Get a notification about spots freeing up
+      .form-horizontal#get_notified_form(style='padding-bottom: 15px;')
+        a.btn.btn-default(type='button', data-toggle='modal', data-target='#phoneModal', data-whatever='eh') Get a notification about spots freeing up
 
   .row
     
@@ -33,7 +36,7 @@ block content
                 .form-group
                   label.control-label(for='message-text') CRNs:
                   |             
-                  textarea#CRN-list.form-control(placeholder='Enter CRNs of all full classes you are interested in getting notified of a spot in')
+                  textarea#CRN-list.form-control(placeholder='Enter CRNs of all full classes you are interested in getting notified of a spot in separating them using commas or spaces')
             |       
             .modal-footer
               button.btn.btn-default(type='button', data-dismiss='modal') Close
@@ -58,7 +61,7 @@ block content
         .modal-content
           .modal-body
             p Yay, you submitted your request. Once there is a free spot, you should receive a text message
-            //-Yay, seems like everything went fine. Once there is a free spot, you should receive a text message
+            
     
 
 //-    .col-sm-6

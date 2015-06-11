@@ -1,9 +1,9 @@
 /**
  * Module dependencies.
  */
-var accountSid = 'placeholder'; 
-var authToken = 'placeholder';
-var twilio_number = "placeholder"
+var accountSid = '***'; 
+var authToken = '***';
+var twilio_number = "***"
 var phone = require('phone');//used to check phone format
  
 //require the Twilio module and create a REST client 
@@ -19,10 +19,8 @@ var csrf = require('lusca').csrf();
 var methodOverride = require('method-override');
 var PythonShell = require('python-shell');
 var _ = require('lodash');
-//var MongoStore = require('connect-mongo')(session);
 var flash = require('express-flash');
 var path = require('path');
-//var mongoose = require('mongoose');
 var passport = require('passport');
 var expressValidator = require('express-validator');
 var connectAssets = require('connect-assets');
@@ -30,7 +28,7 @@ var connectAssets = require('connect-assets');
 /**
  * DB Stuff
  */
-//var mongo = require('mongodb');
+var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/no_spots_at_tech_db');
 
@@ -62,11 +60,6 @@ var io = require('socket.io')(server);
  * Connect to MongoDB.
  */
 
-//mongoose.connect(secrets.db);
-//mongoose.connection.on('error', function() {
-//  console.error('MongoDB Connection Error. Please make sure that MongoDB is running.');
-//});
-
 /**
  * CSRF whitelist.
  */
@@ -77,14 +70,12 @@ var csrfExclude = ['/url1', '/url2'];
  * Express configuration.
  */
 
-app.set('port', process.env.PORT || 8080);
+app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(compress());
-app.use(function(req,res,next){
-    req.db = db;
-    next();
-});
+
+
 app.use(connectAssets({
   paths: [path.join(__dirname, 'public/css'), path.join(__dirname, 'public/js')]
 }));
@@ -98,10 +89,9 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   secret: secrets.sessionSecret,
-  //store: new MongoStore({ url: secrets.db, autoReconnect: true })
 }));
-//app.use(passport.initialize());
-//app.use(passport.session());
+
+
 app.use(flash());
 app.use(function(req, res, next) {
   // CSRF protection.
@@ -130,6 +120,7 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }))
 
 //app.get('/', homeController.sectionlist);
 app.get('/', homeController.index);
+//app.get('/splash', homeController.splash);
 app.get('/login', userController.getLogin);
 app.post('/login', userController.postLogin);
 app.get('/logout', userController.logout);
@@ -223,40 +214,34 @@ server.listen(app.get('port'), function() {
 
 io.on('connection', function(socket) {
   
-  /*client.messages.create({  
-    to: "+17709068910", 
-    from: "+16789713520", 
-    body: "111",    
-  }, function(err, message) { 
-    console.log(message.sid); 
-  });*/
-    
-
   
   socket.emit('greet', { message: 'Connection is successful!' });
-  socket.on('respond', function(data, current_course) {
-    console.log(data);
+  socket.on('respond', function(data, current_course, current_semester) {
+    //console.log(data);
+    //console.log(current_course);
+    //console.log(current_semester);
     var collection = db.get('sections');
-    collection.find({course : current_course },{},function(e,data) {
+    collection.find({course : current_course, semester: current_semester },{},function(e,data) {
     socket.emit("update_sections",data)
     })
   });
   
-  socket.on('update_sections', function(cur_course){
+  socket.on('update_sections', function(cur_course,cur_semester){
     current_course = cur_course
+    current_semester = cur_semester
     //console.log(sections);
     //console.log("yay, updating stuff from server");
     var collection = db.get('sections');
-    collection.find({course : current_course },{},function(e,data) {
+    collection.find({course : current_course, semester: current_semester },{},function(e,data) {
        socket.emit("update_sections",data)
     }) 
   });
   
-  socket.on('find_sections', function(course_name){
-    //console.log(sections);
+  socket.on('find_sections', function(course_name,course_semester){
+    console.log(course_name);
     //console.log("yay, updating stuff from server");
     var collection = db.get('sections');
-    collection.find({course : course_name },{},function(e,data) {
+    collection.find({course : course_name, semester : course_semester },{},function(e,data) {
        if (data != "") socket.emit("update_sections",data)
     }) 
   });
@@ -299,10 +284,10 @@ io.on('connection', function(socket) {
     }
 
       //console.log(CRN_list_clear);
-      //if(CRN_list_clear.length > 0) socket.emit('added_CRN');
-      //else socket.emit('wrong_CRN');
-  })   
-});
+      if(CRN_list_clear.length > 0) socket.emit('added_CRN');
+      else socket.emit('wrong_CRN');
+  }) 
+}); 
 
 function phone_union (new_num, old_nums) {
   //console.log("new: " + new_num + ' old: ' + old_nums)
@@ -332,11 +317,11 @@ var options = {
 
 var text_notifications_update_count = 0;
 
-function notify_user(phone_num, CRN, course) {
+function notify_user(phone_num, CRN, course, semester) {
   client.messages.create({
     to: phone_num,
     from: twilio_number,
-    body: 'Good news! ' + course + ' (CRN: ' + CRN + ") just got a free spot. Go register through buzzport or oscar before someone else claimed it!"
+    body: 'Good news! ' + course + ' (CRN: ' + CRN + "; " + semester + ") just got a free spot. Go register through buzzport or oscar before someone else claimed it!"
   }, function(err, message) {
     console.log(message.sid);
   })
@@ -352,10 +337,10 @@ setInterval(function() {
       var phones_to_notify = crn.phone_nums;
       //console.log(crn.phone_nums);
       collection.find({ CRN : crn.CRN },{scope:{phones_to_notify:phones_to_notify}, crn_collection:crn_collection},function(e,data) {
-        if (parseInt(stripAlphaChars(data[0].seats_left), 10) > 0) {
+        if ((parseInt(stripAlphaChars(data[0].total_capacity), 10) - parseInt(stripAlphaChars(data[0].students_registered), 10)) > 0) {
           console.log("yay, free seats in " + data[0].course + " (CRN: " + data[0].CRN + ")");
           console.log("notifying " + phones_to_notify);
-          notify_user(phones_to_notify, data[0].CRN, data[0].course);
+          notify_user(phones_to_notify, data[0].CRN, data[0].course, data[0].semester);
           var CRN_notified = data[0].CRN;
           console.log("CRN notified " + CRN_notified)
           crn_collection.remove({ CRN: CRN_notified})
@@ -372,16 +357,4 @@ function stripAlphaChars(source) {
 }
 
 
-function db_update(db_update_count){
-  PythonShell.run('oscar_retrieval.py', options, function (err, results) {
-    if (err) throw err;
-    // results is an array consisting of messages collected during execution
-    console.log('results: %j', db_update_count);
-    //db_update_count++;
-    db_update(db_update_count+1);
-    //comment this line out if you want to build the db along with commenting out appropriate lines in tge .py file
-  }); 
-}
-
-db_update(0);
 module.exports = app;
