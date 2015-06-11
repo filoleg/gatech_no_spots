@@ -1,8 +1,8 @@
 gatech_no_spots
 ===============
 
-work in progress, supposed to be a webapp for real time tracking of registration spots available in classes at Georgia Tech.
+A web application that makes registration for classes at Georgia Tech way less painful than it actually is by allowing to directly find information about the class you are interested in with one click. Also, you can sign up to get notified by text when a spot opens in a full class you are interested in, which should give you a lot of free time to allow to do something else other than manually refreshing the class page for hours on end.
 
-TODO:
--add twilio support for free spots notifications
--describe how everything works, but no time for that now; everything needs to be rushed and should work before the registration starts tomorrow/today
+Built using Node.js+Express+Mongo+Twilio.
+
+Hosted and is running at http://no-spots-left.me:3000/.
